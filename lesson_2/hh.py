@@ -4,6 +4,33 @@ import numpy as np
 import pandas as pd
 import json
 import csv
+import re
+
+def split_salary(salary):
+    salary_list = []
+    print(salary)
+    non_fixed_salary = '(^до|^от)'
+    result = re.search(non_fixed_salary, salary)
+    if result is not None:
+        pattern_valute = r'(USD$|руб.$)'
+        pattent_salary = r'([0-9]+)'
+        min_or_max = re.search(non_fixed_salary,salary)
+        valute = re.search(pattern_valute, salary)
+        sum = re.search(pattent_salary, salary)
+        salary_list.append(min_or_max[0])
+        salary_list.append(sum[0])
+        salary_list.append(valute[0])
+        return salary_list
+    else:
+        pattern_valute = r'(USD$|руб.$)'
+        pattent_salary = r'([0-9]+)'
+        valute = re.search(pattern_valute, salary)
+        sum = re.findall(pattent_salary,salary)
+        salary_list.append(sum[0])
+        salary_list.append(sum[1])
+        salary_list.append(valute[0])
+        return salary_list
+
 
 base_url = 'https://hh.ru'
 headers = {
@@ -36,7 +63,8 @@ for article in articles:
     #       f' Наименование компании: {employer} \n'
     #       f' Расположение: {address}')
     article_data['vacancy'] = vacancy.text
-    article_data['salary'] = salary
+    # article_data['salary'] = salary.replace(u"\u202f","")
+    article_data['salary'] = split_salary(salary.replace(u"\u202f",""))
     article_data['link'] = link
     article_data['employer'] = employer
     article_data['address'] = address
@@ -45,10 +73,10 @@ for article in articles:
 
 # print(article_list)
 
-with open('hh_ru.json','w',encoding='utf-8-sig') as f:
+with open('hh_ru.json','w',encoding='utf-8') as f:
     json.dump(article_list,f,indent=4,ensure_ascii=False)
 
-with open('hh_ru.json', encoding='utf-8-sig') as inputfile:
+with open('hh_ru.json', encoding='utf-8') as inputfile:
     df = pd.read_json(inputfile)
 
 df.to_csv('hh_ru.csv', encoding='utf-8', index=False)
